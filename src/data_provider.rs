@@ -41,6 +41,7 @@ pub trait TableDataProvider<Row, Err: Debug = String> {
 
     /// Refresh side effects without reloading the data.
     /// This method is called right after get_rows.
+    #[allow(unused_variables)]
     async fn refresh(&self, rows: &[Row]);
 
     /// The total number of rows in the table. Returns `None` if unknown (which is the default).
@@ -87,6 +88,7 @@ pub trait PaginatedTableDataProvider<Row, Err: Debug = String> {
 
     /// Refresh side effects without reloading the data.
     /// This method is called right after get_page.
+    #[allow(unused_variables)]
     async fn refresh(&self, rows: &[Row]);
 
     /// The total number of rows in the table. Returns `None` if unknown (which is the default).
