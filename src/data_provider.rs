@@ -39,6 +39,10 @@ pub trait TableDataProvider<Row, Err: Debug = String> {
     /// in place of the failed rows.
     async fn get_rows(&self, range: Range<usize>) -> Result<(Vec<Row>, Range<usize>), Err>;
 
+    /// Refresh side effects without reloading the data.
+    /// This method is called right after get_rows.
+    async fn refresh(&self, rows: &[Row]);
+
     /// The total number of rows in the table. Returns `None` if unknown (which is the default).
     async fn row_count(&self) -> Option<usize> {
         None
@@ -80,6 +84,10 @@ pub trait PaginatedTableDataProvider<Row, Err: Debug = String> {
     /// If you return less than `PAGE_ROW_COUNT` rows, it is assumed that the end of the
     /// data has been reached.
     async fn get_page(&self, page_index: usize) -> Result<Vec<Row>, Err>;
+
+    /// Refresh side effects without reloading the data.
+    /// This method is called right after get_page.
+    async fn refresh(&self, rows: &[Row]);
 
     /// The total number of rows in the table. Returns `None` if unknown (which is the default).
     ///
@@ -126,6 +134,10 @@ where
             let len = rows.len();
             (rows, start..start + len)
         })
+    }
+
+    async fn refresh(&self, rows: &[Row]) {
+        PaginatedTableDataProvider::<Row, Err>::refresh(self, rows).await
     }
 
     async fn row_count(&self) -> Option<usize> {

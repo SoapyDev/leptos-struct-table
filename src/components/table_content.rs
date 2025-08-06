@@ -508,7 +508,8 @@ where
                                 return;
                             }
 
-                            if let Ok((_, loaded_range)) = &result {
+                            if let Ok((data, loaded_range)) = &result {
+                                rows.borrow().refresh(data).await;
                                 if loaded_range.end < missing_range.end {
                                     match row_count_opt {
                                         // Use pre-fetched value!
