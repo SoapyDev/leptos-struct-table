@@ -10,7 +10,7 @@ use crate::{
     ChangeEvent, ColumnSort, DefaultErrorRowRenderer, DefaultLoadingRowRenderer,
     DefaultRowPlaceholderRenderer, DefaultTableBodyRenderer, DefaultTableHeadRenderer,
     DefaultTableHeadRowRenderer, DefaultTableRowRenderer, DisplayStrategy, EventHandler,
-    ReloadController, RowReader, SelectionChangeEvent, SortingMode, TableClassesProvider,
+    ReloadController, RefreshController, RowReader, SelectionChangeEvent, SortingMode, TableClassesProvider,
     TableDataProvider, TableHeadEvent,
 };
 use leptos::prelude::*;
@@ -165,6 +165,9 @@ pub fn TableContent<Row, DataP, Err, ClsP, ScrollEl, ScrollM>(
     /// for how to use.
     #[prop(optional)]
     reload_controller: ReloadController,
+    /// Allow to manually trigger a refresh.
+    #[prop(optional)]
+    refresh_controller: RefreshController,
     /// The display strategy to use when rendering the table.
     /// Can be one of
     /// - `Virtualization`
@@ -299,6 +302,28 @@ where
             reload_controller.track();
             rows.borrow().track();
             clear(true);
+        }
+    });
+
+    Effect::new({
+        let rows = Rc::clone(&rows);
+
+        move || {
+            // triggered when 'RefreshController::refresh()' is called
+            refresh_controller.track();
+            let len = loaded_rows.read().len();
+            let data = loaded_rows
+                .read()[0..len]
+                .iter()
+                .filter_map(|r| {
+                    if let RowState::Loaded(val) = r {
+                        Some(val.get())
+                    }else{
+                        None
+                    }
+                })
+                .collect::<Vec<_>>();
+            rows.borrow().refresh(&data);
         }
     });
 
@@ -509,7 +534,7 @@ where
                             }
 
                             if let Ok((data, loaded_range)) = &result {
-                                rows.borrow().refresh(data).await;
+                                rows.borrow().refresh(data);
                                 if loaded_range.end < missing_range.end {
                                     match row_count_opt {
                                         // Use pre-fetched value!

@@ -4,6 +4,7 @@ use crate::ColumnSort;
 use std::collections::VecDeque;
 use std::fmt::Debug;
 use std::ops::Range;
+use leptos::prelude::RwSignal;
 
 /// The trait that provides data for the `<TableContent>` component.
 /// Anything that is passed to the `rows` prop must implement this trait.
@@ -39,10 +40,12 @@ pub trait TableDataProvider<Row, Err: Debug = String> {
     /// in place of the failed rows.
     async fn get_rows(&self, range: Range<usize>) -> Result<(Vec<Row>, Range<usize>), Err>;
 
-    /// Refresh side effects without reloading the data.
-    /// This method is called right after get_rows.
+    /// Refresh data dependant side effects without reloading the data.
+    /// This method is called right after get_page.
     #[allow(unused_variables)]
-    async fn refresh(&self, rows: &[Row]) {}
+    fn refresh(&self, rows: &Vec<Row>) {
+        // By default, do nothing.
+    }
 
     /// The total number of rows in the table. Returns `None` if unknown (which is the default).
     async fn row_count(&self) -> Option<usize> {
@@ -86,10 +89,12 @@ pub trait PaginatedTableDataProvider<Row, Err: Debug = String> {
     /// data has been reached.
     async fn get_page(&self, page_index: usize) -> Result<Vec<Row>, Err>;
 
-    /// Refresh side effects without reloading the data.
+    /// Refresh data dependant side effects without reloading the data.
     /// This method is called right after get_page.
     #[allow(unused_variables)]
-    async fn refresh(&self, rows: &[Row]) {}
+    fn refresh(&self, rows: &Vec<Row>) {
+        // By default, do nothing.
+    }
 
     /// The total number of rows in the table. Returns `None` if unknown (which is the default).
     ///
@@ -138,8 +143,8 @@ where
         })
     }
 
-    async fn refresh(&self, rows: &[Row]) {
-        PaginatedTableDataProvider::<Row, Err>::refresh(self, rows).await
+    fn refresh(&self, rows: &Vec<Row>) {
+        PaginatedTableDataProvider::<Row, Err>::refresh(self, rows)
     }
 
     async fn row_count(&self) -> Option<usize> {
