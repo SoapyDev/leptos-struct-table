@@ -43,7 +43,7 @@ pub trait TableDataProvider<Row, Err: Debug = String> {
     /// Refresh data dependant side effects without reloading the data.
     /// This method is called right after get_page.
     #[allow(unused_variables)]
-    fn refresh(&self, rows: &Vec<Row>) {
+    fn refresh(&self, rows: Vec<RwSignal<Row>>) {
         // By default, do nothing.
     }
 
@@ -92,7 +92,7 @@ pub trait PaginatedTableDataProvider<Row, Err: Debug = String> {
     /// Refresh data dependant side effects without reloading the data.
     /// This method is called right after get_page.
     #[allow(unused_variables)]
-    fn refresh(&self, rows: &Vec<Row>) {
+    fn refresh(&self, rows: Vec<RwSignal<Row>>) {
         // By default, do nothing.
     }
 
@@ -143,7 +143,7 @@ where
         })
     }
 
-    fn refresh(&self, rows: &Vec<Row>) {
+    fn refresh(&self, rows: Vec<RwSignal<Row>>) {
         PaginatedTableDataProvider::<Row, Err>::refresh(self, rows)
     }
 

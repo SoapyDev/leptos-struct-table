@@ -305,25 +305,30 @@ where
         }
     });
 
+    let extract_rows = move || {
+        let len = loaded_rows.read().len();
+        loaded_rows
+            .read()[0..len]
+            .iter()
+            .filter_map(|r| {
+                if let RowState::Loaded(val) = r {
+                    Some(val)
+                }else{
+                    None
+                }
+            })
+            .copied()
+            .collect::<Vec<_>>()
+    };
+
     Effect::new({
         let rows = Rc::clone(&rows);
 
         move || {
             // triggered when 'RefreshController::refresh()' is called
             refresh_controller.track();
-            let len = loaded_rows.read().len();
-            let data = loaded_rows
-                .read()[0..len]
-                .iter()
-                .filter_map(|r| {
-                    if let RowState::Loaded(val) = r {
-                        Some(val.get())
-                    }else{
-                        None
-                    }
-                })
-                .collect::<Vec<_>>();
-            rows.borrow().refresh(&data);
+            let data = extract_rows();
+            rows.borrow().refresh(data);
         }
     });
 
@@ -533,8 +538,7 @@ where
                                 return;
                             }
 
-                            if let Ok((data, loaded_range)) = &result {
-                                rows.borrow().refresh(data);
+                            if let Ok((_, loaded_range)) = &result {
                                 if loaded_range.end < missing_range.end {
                                     match row_count_opt {
                                         // Use pre-fetched value!
@@ -551,6 +555,8 @@ where
                             }
                             loaded_rows.write().write_loaded(result, missing_range);
                             compute_average_row_height();
+                            let data = extract_rows();
+                            rows.borrow().refresh(data);
                         }
                     }
                 });
